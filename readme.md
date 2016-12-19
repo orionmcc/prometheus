@@ -38,6 +38,40 @@ number1, string1 := 100, "bar"
 const1 ^= "Very important data"
 ```
 
+## Functions
+Let's say that we want to get some work done with out new super set language.  We're going to need some functions.
+```
+func foo () {
+  return "bar"
+}
+```
+You might notice that out function returns a value, but doesn't specify what type of value will be returned.  That is because function return type can be inferred.  We can also set it explicitly.
+
+```
+func foo () : string {
+  return "my string bar"
+}
+```
+
+We can also add in some parameters.  Notice that type inference works here as well
+```
+func concat ( str1 string, str2 string ) {
+  return str1 + str2
+}
+```
+
+Prom also supports default and rest parameters
+```
+//notice that type inference works with our default perameter
+func add(num1 num, num2 = 2) {
+  return num1 + num2
+}
+
+func makeArray(...rest) {
+  return rest;
+}
+```
+
 ## Helpers
 Prom has a few neat helpers that are sugar to speed up common tasks.
 
@@ -52,6 +86,15 @@ If you find yourself moving things back and forth to json a lot, jsonify and str
 myObj = { foo : "bar" }
 stringObject := stringify myObj
 objObject := jsonify stringObject
+```
+
+Decltype return the compile time type of an object as Prom script is currently aware of it
+```
+myObj = { foo : "bar" }
+decltype myObj //returns "object"
+
+myFunc := func xyz () { return "xyz" }
+decltype myFunc //returns "() string"
 ```
 
 ## Comments
