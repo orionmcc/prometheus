@@ -5,7 +5,7 @@ Prom script started as a way to alleviate some of my frustrations working with j
 In the beginning, prom script resembled c style languages pretty closely, but I started to think, what if I didn't constrain myself to behaving like just another c language.  What modern constructs might I mimic?  what fresh ideas could I use to generate code the way I wanted to.
 What could I do to increase readibility, or reduce certain mistakes, or to encourage certain design patterns.  This is as far as I've gotten so far.  Let me know if you think it's cool.  
 
-## h2 Declarations
+## Declarations
 
 Prom script is typed, and thus uses let to assign types to your variables
 ```
@@ -13,20 +13,24 @@ let foo num
 const bar string //very important data, do not change me
 ```
 
+
 You can also assign multiple variables at once.  Notice, that Prom will assign the last known value type to all variables
 ```
 let number1, number2 number
 ```
+
 
 You can also assign value to your things at the same time
 ```
 let number1, number2, number3 num = 1, 2, 3
 ```
 
+
 Note, you have to match type on declaration. Don't worry, you can mix types in a let statement as needed
 ```
 let number1 num, string1 string, bool1 bool = 1, "foo", true
 ```
+
 
 For convenience, you can use the declassign operators, which will declare and assign your variables at the same time, inferring type where necessary.  
 ```
@@ -34,3 +38,25 @@ number1, string1 := 100, "bar"
 const1 ^= "Very important data"
 ```
 
+## Helpers
+Prom has a few neat helpers that are sugar to speed up common tasks.
+
+Is can be used to determine the type of a variable
+```
+isBool := true
+isBool is bool //returns true
+```
+
+If you find yourself moving things back and forth to json a lot, jsonify and stringify will help out a bit
+```
+myObj = { foo : "bar" }
+stringObject := stringify myObj
+objObject := jsonify stringObject
+```
+
+## Comments
+Comments are boring, and no one uses them, but if you do use them, be aware that prom supports nested comments.
+```
+/*super trippy/*nested /*commenting*/*/*/
+```
+I find the very useful when trying to debug some part of a script that's gone awry.
