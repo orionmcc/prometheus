@@ -129,6 +129,31 @@ ext tells the compiler to be on the lookout for an expression you might not reco
 
 Sometimes prom can make inferences based on how a variable is used.  In the above example, prom interprets `console` as an object, due to the member access, and it interprets that `log` is a member function of the `console` object.  In this way, the second occurence of console.log conforms to proms expectations for `console.log()`.  There is no way for prom to know the exact return type of log, so it interprets the return type as `typeless`
 
+Lets say you bring in a variable, and you know for certain what type a typeless object is.  You can explicitly set the type of an object with the type assign operator
+```
+ext MyEliteVar : obj
+```
+
+This assignment is sticky, and `MyEliteVar` will retain that typing for the rest of the program duration.  What if, however, you want to assert temporarily that a variable is of a certain type.  In this case you would use the static cast operator.
+
+```
+let a num, b string
+a = b //this returns a type mismatch error
+a = b :: num //this works, but why would you want to do this you sicko?
+```
+NB: you should use this sparingly.  There should not be much need to use this as the types in prom are considerably looser than they are in a classic language like c.
+
+The final inter op feature is that large sections of external code can be declared so that prom will recognize it.  We do this with the declext syntax.
+```
+declext alert ( string )
+declext console {
+	log ( ... ) //defaults to void return
+	error ( ... )
+}
+```
+
+This would give us propper type checking with which to use standard javascript functionality.  Further, should you decide that an external piece of software is very improtant to your workflow, this gives a very simple, sparse syntax for gaining access to libraries you need most.
+
 ## Comments
 Comments are boring, and no one uses them, but if you do use them, be aware that prom supports nested comments.
 ```
