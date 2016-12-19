@@ -82,6 +82,15 @@ addTwo := add(2)
 four := addTwo(2)
 ``` 
 
+Make sure to mind your use of default and rest values as those can keep a function from currying
+```
+func restFunc(val num, ...rest) { return rest }
+restFunc(1) //will not curry because the compiler interprets this as an empty rest parameter
+
+func defFunc(val num, def = 2)
+defFunc(1) //will not curry because the compiler evaluates this as defFunc(1, 2)
+```
+
 ## Helpers
 Prom has a few neat helpers that are sugar to speed up common tasks.
 
@@ -106,6 +115,19 @@ decltype myObj //returns "object"
 myFunc := func xyz () { return "xyz" }
 decltype myFunc //returns "() string"
 ```
+
+## Interop and casting
+It would be unreasonable to assume that you would switch from all of your favorite js libraries to writing pure prom script, so prom offers a few features designed to ease development.
+
+The `ext` key word can be used to signal to prom script that something follows that it may not be familiar with.
+```
+ext console.log("hello")
+console.log("world")
+```
+
+ext tells the compiler to be on the lookout for an expression you might not recognize.  When the compiler encounters variables it does not know, it attempts to assign that variable the type `typeless`.  `Typeless` is the compiler's way of conveying that it has seen and parsed a symbol, but it does not know for sure what the type of that symbol is.
+
+Sometimes prom can make inferences based on how a variable is used.  In the above example, prom interprets `console` as an object, due to the member access, and it interprets that `log` is a member function of the `console` object.  In this way, the second occurence of console.log conforms to proms expectations for `console.log()`.  There is no way for prom to know the exact return type of log, so it interprets the return type as `typeless`
 
 ## Comments
 Comments are boring, and no one uses them, but if you do use them, be aware that prom supports nested comments.
