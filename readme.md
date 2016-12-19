@@ -72,6 +72,16 @@ func makeArray(...rest) {
 }
 ```
 
+But all of this brings us to one of the coller features of prom, which is 
+
+## Currying
+Prom script will natively support currying your functions
+```
+func add(n1 num, n2 num) { return n1 + n2 }
+addTwo := add(2)
+four := addTwo(2)
+``` 
+
 ## Helpers
 Prom has a few neat helpers that are sugar to speed up common tasks.
 
