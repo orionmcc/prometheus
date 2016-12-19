@@ -1,0 +1,292 @@
+
+/*comment/*nested comment*/*/
+
+/*
+//macros
+macro ifnot <e1 expression> { <b1 block> }
+{
+	if e1 == false {
+		b1
+	}
+}
+
+ifnot false 
+{
+	true
+}
+
+expand ifnot false 
+{
+	true
+}
+*/
+
+/*
+declext alert ( string )
+declext console {
+	log ( string ) //defaults to void return
+	error ( string )
+}
+*/
+ext console.log("Prometheus script test")
+
+isBool := false
+func hello(w string) : string {
+	if isBool is bool
+	{
+		w = w + " switch"
+	}
+	return "hello " + w
+}
+console.log(hello("world"))
+
+/*Classes and Interfaces*/
+interface Named
+{
+	public func getName() : string
+	public func changeName(newName string) : string
+}
+
+interface Aging
+{
+	public func setAge(age num) : num
+	public func getAge() : num
+}
+
+interface Secretive
+{
+	public func getSecret() : string
+}
+
+//this is a transitive function
+func Named=>alternateHi() : string
+{
+	return "konnichiwa. watashi no namae wa " + getName() + " desu"
+}
+
+func Aging=>age() : num
+{
+	return setAge( getAge() + 1 )
+}
+
+class Person implements Named, Aging
+{
+	private name string
+	private age num
+	public gender string
+
+	Person (_name string, _age = 35) : name(_name) age(_age) {}
+
+	public func getName() { return name }
+	public func changeName(newName = "jim") { return name = newName }
+	public func setAge(newAge num) : num { return age = newAge }
+	public func getAge() : num { return age }
+
+	public func identify() { return "Hello, my name is " + name + " and I'm a " + age + " year old " + gender}
+}
+
+/*An exmaple using an interface as a function param*/
+func prefixName (prefix string, namedPerson Named) {
+	return prefix + " " + namedPerson.getName()
+}
+
+//func tellSecrets(person Secretive Named) : void {
+func tellSecrets(person Secretive) : void {
+	console.log(person.getSecret())
+}
+
+/*Class Extension*/
+class Man extends Person implements Secretive
+{
+	private secret string
+
+	public Man(_name string, _age num) : Person(_name, _age) gender("man")
+	{
+		secret = "I have a secret"
+	}
+
+	public func getSecret() { return secret }
+}
+
+class Woman extends Person
+{
+	public Woman(_name string, _age num) : Person(_name, _age) gender("woman")
+	{
+	}
+}
+
+let bob Man = Man("bob", 40)
+maggie := Woman("maggie", 21)
+
+prefixName("mr.", bob)
+
+console.log(prefixName("mr.", bob))
+console.log(bob=>alternateHi())
+console.log(maggie=>age())
+console.log(bob)
+console.log(maggie)
+console.log(decltype bob)
+tellSecrets(bob)
+/**/
+
+
+
+//closures and functional returns
+func closure() : func {
+	_abc := "abc"
+	return func xyz () : string {
+		return _abc + "xyz"
+	}
+}
+
+isClosure := closure
+console.log("Is closure is equal to ", decltype isClosure)
+console.log("Hello World")
+
+/*
+abcf := abc()
+abcxyz := abc()()
+decltype abc // () func
+decltype abcf // () string
+decltype abcxyz //string
+*/
+
+
+
+/*
+//some variable declarations
+let foo num //mutable
+const fooz, barz num //mutable
+let foo, bar num, baz
+let foox, barx num, bazx string
+let aString string, anInt num = "hello", 1
+a, b, c := 1, 2, 3 //mutable
+a, b, c ^= 1, 2, 3 //immutable
+*/
+
+
+/*
+//static typing test
+let a num, b string, = 1, "alpha"
+a = b //error
+a = b:num //error, type reassign
+a = b::num //not error
+*/
+
+
+/*
+//array assignment and decltype
+foo ^=  ["hello", "world"]
+dt := decltype foo
+*/
+
+
+
+//default values
+func abc (a string, b string, c string = "c") : string
+{
+	return a + b + c
+}
+
+curryFunc := abc("z")
+finalVal := curryFunc("y", "z")
+abc("z", "y")
+console.log("abc(z)", curryFunc)
+console.log("abc(z, y)", decltype abc("z", "y")) //Evaluates, this is not a curry
+console.log("curryFunc", curryFunc)
+console.log("finalVal", finalVal)
+console.log("curryFunc('y')", curryFunc("y"))
+/**/
+
+
+//rest params
+func append2toArray(val1 num, val2 num, ...rest) {
+	return rest
+}
+curry := append2toArray(1)
+notcurry := append2toArray(1, 2)
+decltype curry
+decltype notcurry
+console.log(curry(2, 3, 4, 5))
+/**/
+// NB: func(rest...) crashes... boo
+
+
+//function def and curries
+func add( a num, b num ) : num {
+	return a + b
+}
+decltype add
+
+addTwo := add(2)
+decltype addTwo
+four := addTwo(2)
+console.log(four)
+/**/
+
+
+
+
+
+//deconstruction
+// obj := { one:1, two:2, three: 3}
+//let {one, two, three} = obj
+//let { e, f, g } = { a:1, b:2, c:"world", e: 0, f: 0, g:0 } //maybe this doesn't make sense
+//let { e num, c string, ...rest} = { a:1, b:2, c:"world", e: 0, f: 0, g:0 } //maybe this does
+// //so then, rest = {a:1, b:2, f: 0, g:0}
+// let { a num } = { a: "string" } //this would error
+
+
+//{ e, f, g } := { a:1, b:2, c:"world", e: 0, f: 0, g:0 } //maybe more likely
+//{one, two, three} := obj;
+
+//this is an unsafe call because currently we don't know object composition
+//{one, two, three = 3, ...rest} = obj; //this is the ideal situation
+
+
+
+/*
+
+//alert(bob.sayHi())
+bob.changeName("Robert")
+//alert(bob.getName())
+//alert(bob.sayHi())
+//alert(maggie.idntify())
+bob.mySecret = "I'm not wearing socks"
+maggie.mySecret = "I love lamp"
+//alert(maggie.secret())
+//alert(bob.secret())
+alert(bob=>alternateHi())
+/*
+bob := NamedPerson("Bob")
+greetings := bob=>alternateHi()
+bob.changeName("Marc")
+greetingsMarc := bob=>alternateHi()
+title := prefixName("mr.", bob)
+*/
+
+/*hello world & type checking*/
+z := false
+func hello(w string) : string{
+	if(z is bool)
+	{
+		w = w + " switch"
+	}
+	return "hello " + w
+}
+
+x := "world"
+y := hello(x)
+//alert(y)
+
+
+/*vargs*/
+add := (x num, ...numbers) : num{
+	return x;
+}
+add(1, 2, 3);
+
+/*json operators*/
+alpha := jsonify "{\"hello\":\"world\"}"
+omega := stringify alpha
+//if(alpha is !0) alert( stringify alpha )
