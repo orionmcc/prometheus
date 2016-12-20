@@ -91,6 +91,131 @@ func defFunc(val num, def = 2)
 defFunc(1) //will not curry because the compiler evaluates this as defFunc(1, 2)
 ```
 
+## Classes
+Prom Script supports a moral formal implementation of Classes
+
+```
+class Person
+{
+}
+```
+
+Classes support many of the features you might find familiar from other languages including constructors, methods, and member variables.  These member variables can be access protected so that they are only available privately.  If you do not specify, members default to private access.
+```
+class Person
+{
+	public name string
+	private age num
+
+	public func getName () {
+		return name
+	}
+
+	public func setName (newName string) {
+		return name = newName
+	}
+
+	//a default constructor is provided if you do not specify one
+	//class constructors support initializer lists
+	Person(_name string, _age num) : name(_name) age(_age) { /*do something else*/ }
+}
+```
+
+Classes can be extended in two ways.  Classes can be extended from other classes, or classes may implement any number of interfaces (covered below).
+
+```
+class LazyPerson extends Person
+{
+	public hobby string
+	func doSomething() { return "nope" }
+
+	//an extended class must satisfy it's parent's constructors
+	LazyPerson(_name string, _age num, _hobby) : Person(_name, _age) hobby(_hobby)
+}
+```
+
+Once you have your class defined.  Instantiation of that class looks like this
+
+```
+Peter := Person("Peter", 35)
+Paul := LazyPerson("Paul", 5, "Not having a job")
+```
+
+## Interfaces
+Interfaces allow you to declare that a class satisfies certain functionality without implementing that functionality.  By doing this, we gain some of the benefits of multiple inheritence, whilie avoiding some of the pitfalls it introduces.
+
+```
+interface Aging 
+{
+	public func growOld() num
+	public func die() string
+}
+interface Working 
+{
+	public func goToWork()  string
+	public func payTaxes() num
+}
+```
+
+A class may implement as many interface as desired
+
+```
+class Adult implements Aging, Working
+{
+	private age num
+	private money num
+
+	Adult(_age = 25, _money = 200) : age(_age) money(_money) 
+
+	public func growOld() num
+	public func die() string
+	public func goToWork()  string
+	public func payTaxes() num
+}
+```
+
+Instances of objects that implement classes can be used to satisfy evaluations of that type.
+
+```
+Adam := Adult()
+
+func day(Working tiredPerson) {
+	return tiredPerson.goToWork() + tiredPerson.payTaxes()
+}
+
+func toDay(Aging oldPerson) {
+	return oldPerson.growOld() + oldPerson.die()
+}
+
+func life(Adult oldTiredPerson) : string {
+	return day(oldTiredPerson) + toDay(oldTiredPerson)
+}
+
+life(Adam)
+```
+
+Classes that implement interfaces can also be used with transitive methods.  Transitive methods are called on an object instance as if that object implemented that function.  Instead, that function is implemented externally, and can be applied to all classes that implement that interface.
+```
+func Working => work() {
+	return goToWork() + payTaxes()
+}
+
+func Aging => age() {
+	return growOld() + oldPerson()
+}
+```
+
+With these transitive methods defined, our code from earlier could be refactored as
+```
+func life(Adult over18Person) : string {
+	return over18Person => work() + over18Perso n=> age()
+}
+
+life(Adam)
+```
+
+which you may find a little easier to read
+
 ## Helpers
 Prom has a few neat helpers that are sugar to speed up common tasks.
 

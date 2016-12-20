@@ -141,9 +141,19 @@ struct SymbolBlock
 		nextBlock = NULL;
 	}
 
+	SymbolBlock* grow(uint32 count)
+	{
+		nextBlock = new SymbolBlock;
+		nextBlock->alloc(count);
+		return nextBlock;
+	}
+
 	void dealloc()
 	{
-		if(nextBlock) nextBlock->dealloc();
+		if (nextBlock) {
+			nextBlock->dealloc();
+			delete nextBlock;
+		}
 		delete[] symbols;
 		symbols = NULL;
 		delete nextBlock;
@@ -158,6 +168,19 @@ struct SymbolBlock
 	}
 };
 SymbolBlock SymbolPool = {0, };
+SymbolBlock* currentHead = &SymbolPool;
+
+Symbol* getNextSymbol()
+{
+	Symbol* s = NULL;
+	s = currentHead->nextSymbol();
+	if (!s)
+	{
+		currentHead = currentHead->grow(1000);
+		s = currentHead->nextSymbol();
+	}
+	return s;
+}
 
 struct Error
 {
@@ -203,14 +226,16 @@ struct Error
 };
 
 tr1::unordered_map<string, Symbol*> symbolTable;
+tr1::unordered_map<string, vector<string>> macroTable;
 vector<Symbol*> symbolStack;
 vector<size_t> symbolScope;
-vector<Symbol*> returnStack;
+//vector<Symbol*> returnStack;
 set<string> keywordTable;
 
+char delims[] = " \t";
 
 //Static symbols for the generic return types
-static Symbol s_TypeUnknownSym;
+//static Symbol s_TypeUnknownSym;
 
 
 Symbol* findSymbol(string& symbol, vector<Symbol*>& stack = symbolStack)
@@ -274,7 +299,7 @@ string GetStringFromType(SymType type)
 	case type_String:	return string("string");
 	case type_Typeless:	return string("typeless");
 	case type_Void:		return string("void");
-	case type_FuncReturn: return string("func");
+	case type_FuncReturn: return string("function");
 	case type_Obj: return string("object");
 	case type_Unknown:	return string("unknown");
 	}
@@ -463,6 +488,7 @@ string parseDeclType(NRVLexToken<int>& token)
 }
 
 void parseBlock(bool isObj, Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error);
+void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error);
 SymType parseExpression(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error);
 void parseParameter(Symbol *symbol, NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error);
 SymType evalEq(SymType type, NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error);
@@ -704,7 +730,7 @@ Symbol* parseDeclaration(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& 
 		}
 
 		lexer.GetNextToken(token);
-		Symbol *symbol = SymbolPool.nextSymbol();
+		Symbol *symbol = getNextSymbol();
 		symbol->identifier = name;
 		symbol->type = type;
 		symbol->prototype = prototype;
@@ -754,7 +780,7 @@ Symbol* parseDeclAssign(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& o
 		}
 
 		lexer.GetNextToken(token);
-		Symbol *symbol = SymbolPool.nextSymbol();
+		Symbol *symbol = getNextSymbol();
 		symbol->identifier = name;
 		symbol->type = type_Unknown;
 		symbol->prototype = NULL;
@@ -1014,7 +1040,7 @@ void parseFunctionDeclaration(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVL
 	lexer.GetNextToken(token);
 	while (token.Token != ")")
 	{
-		Symbol *argSymbol = SymbolPool.nextSymbol();
+		Symbol *argSymbol = getNextSymbol();
 		parseParameter(argSymbol, lexer, token, output, error);
 
 		if (hasVArg)
@@ -1047,7 +1073,7 @@ void parseFunctionDeclaration(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVL
 
 SymType parseFunction(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error)
 {
-	Symbol *symbol = SymbolPool.nextSymbol();
+	Symbol *symbol = getNextSymbol();
 	Symbol *interface = NULL;
 	symbol->type = applyModifier(type_Typeless, type_PublicFunction);
 
@@ -1088,12 +1114,19 @@ SymType parseFunction(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& out
 			}
 
 
-			if (token.Token != "{") do lexer.GetNextToken(token); while (token.Type == lexmetype_NewLine);
+			while (token.Token != "{" && token.Type == lexmetype_NewLine && lexer.GetNextToken(token));
 
 			if (token.Token == "{")
 			{
 				lexer.RewindStream();
 				parseBlock(false, symbol, lexer, token, output, error);
+			}
+			else
+			{
+				output += "{";
+				lexer.RewindStream();
+				parseStatement(symbol, lexer, token, output, error);
+				output += "}";
 			}
 		}
 	}
@@ -1202,7 +1235,7 @@ void parseInitializerList(Symbol *con, Symbol *parent, NRVLexer<int>& lexer, NRV
 {
 	Symbol* member = NULL;
 	int ln = lexer.GetLineNumber();
-	while (lexer.GetNextToken(token) && token.Token != "{")
+	while (lexer.GetNextToken(token) && token.Token != "{" && token.Type != lexmetype_NewLine)
 	{
 		if (error.isFatal()) return;
 
@@ -1370,7 +1403,7 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 				if (isPublic == -1) isPublic = 0;
 
 				string function_body;
-				Symbol *method = SymbolPool.nextSymbol(); //default constructor
+				Symbol *method = getNextSymbol(); //default constructor
 
 				if (isPublic == 1) function_body += classSymbol->identifier + ".prototype.";
 
@@ -1398,7 +1431,7 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 
 					//get the function and push it's params into scope
 					pushArguments(method->arguments, error);
-					returnStack.push_back(method);
+					//returnStack.push_back(method);
 
 
 					parseBlock(false, method, lexer, token, function_body, error);
@@ -1407,7 +1440,7 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 					if (token.Token == "}") {
 						//exiting scope
 						popScope();
-						returnStack.pop_back();
+						//returnStack.pop_back();
 						function_body += "};";
 					}
 					class_internal += function_body + "\n";
@@ -1439,6 +1472,7 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 					parseInitializerList(conFunc, classSymbol->parent, lexer, token, initializer, parent_constructor_params, error);
 				}
 
+				while (token.Type == lexmetype_NewLine && lexer.GetNextToken(token));
 				if (token.Token == "{")
 				{
 					constructor += "{";
@@ -1448,7 +1482,7 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 
 					//get the function and push it's params into scope
 					pushArguments(conFunc->arguments, error);
-					returnStack.push_back(conFunc);
+					//returnStack.push_back(conFunc);
 
 
 					parseBlock(false, conFunc, lexer, token, constructor, error);
@@ -1457,13 +1491,17 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 					if (token.Token == "}") {
 						//exiting scope
 						popScope();
-						returnStack.pop_back();
+						//returnStack.pop_back();
 						constructor += "}";
 					}
 				}
 				else
 				{
-					error.logError("Unexpected token '" + token.Token + "'", lexer.GetLineNumber());
+					constructor += "{";
+					constructor += "var self=this;";
+					constructor += initializer;
+					constructor += "}";
+					lexer.RewindStream();
 				}
 			}
 			else
@@ -1508,7 +1546,7 @@ void parseClassBody(Symbol* classSymbol, string& class_internal, string& constru
 
 void parseClass(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error)
 {
-	Symbol *symbol = SymbolPool.nextSymbol();
+	Symbol *symbol = getNextSymbol();
 	string name;
 	vector<Symbol *> interfaces;
 	Symbol* parent = NULL;
@@ -1597,7 +1635,7 @@ void parseClass(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, E
 				name = token.Token;
 
 				//build out the constructor
-				Symbol *con = SymbolPool.nextSymbol(); //default constructor
+				Symbol *con = getNextSymbol(); //default constructor
 				con->identifier = name;
 				con->type = applyModifier(type_Obj, type_PublicFunction);
 				con->type = applyModifier(type_Obj, type_Constructor);
@@ -1680,7 +1718,7 @@ void parseClass(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, E
 
 void parseInterface(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error)
 {
-	Symbol *symbol = SymbolPool.nextSymbol();
+	Symbol *symbol = getNextSymbol();
 	string name;
 
 	vector<Symbol *>& methods = symbol->arguments;
@@ -1759,7 +1797,7 @@ void parseInterface(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& outpu
 				if (isPublic == -1) isPublic = 0;
 
 				string function_body;
-				Symbol *method = SymbolPool.nextSymbol(); //default constructor
+				Symbol *method = getNextSymbol(); //default constructor
 
 				parseMethod(false, method, lexer, token, function_body, error);
 				method->type = applyModifier(method->type, isPublic ? type_Public : type_NoOp);
@@ -1813,7 +1851,7 @@ void parseInterface(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& outpu
 			if (identifier.empty())
 			{
 				string function_body;
-				Symbol *method = SymbolPool.nextSymbol(); //default constructor
+				Symbol *method = getNextSymbol(); //default constructor
 				lexer.RewindStream();
 				parseMethod(false, method, lexer, token, function_body, error);
 				method->type = applyModifier(method->type, isPublic == 1 ? type_Public : type_NoOp);
@@ -2042,7 +2080,7 @@ SymType parseExpression(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& o
 			}
 			else
 			{
-				s = SymbolPool.nextSymbol();
+				s = getNextSymbol();
 				s->identifier = token.Token;
 				s->type = applyModifier(type_Typeless, type_Extern);
 				name = s->identifier;
@@ -2389,6 +2427,15 @@ SymType parseExpression(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& o
 				|| token.Token == "func") {
 				type = parseFunction(lexer, token, output, error);
 			}
+			else if (token.Token == "obj" ||
+				token.Token == "num" ||
+				token.Token == "string" ||
+				token.Token == "bool" ||
+				token.Token == "typeless")
+			{
+				type = GetTypeFromString(token.Token);
+				break;
+			}
 			else
 			{
 				//Error
@@ -2442,6 +2489,53 @@ SymType parseExpression(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& o
 	return type;
 }
 
+void parseMacro(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error)
+{
+	//get macro from macro table
+	//for each statement either
+		// parse the next literal and add to putput
+		//or parse the lexer as type
+			//parse statment
+			//or parse expression
+			//or parse block
+			//or parse paren
+}
+
+void parseMacroDef(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error)
+{
+	int ln = lexer.GetLineNumber();
+
+	//get macro type
+	if (token.Type == lexmetype_Identifier)
+	{
+		//look to see if this macro is defined already?.
+		Symbol* s = findSymbol(token.Token);
+		if (!s) s = symbolTable[token.Token];
+		if (s)
+		{
+			error.logError("Macro " + token.Token + " is already defined as "+parseDeclType(s->type), ln);
+
+		}
+		else if (macroTable.find(token.Token) == macroTable.end())
+		{
+			vector<string> & macroDef = macroTable[token.Token];
+
+			while (lexer.GetNextToken(token) && token.Token != "{")
+			{
+				//this will either be a literal or a macro var
+			}
+		}
+		else
+		{
+			error.logError("Macro " + token.Token + " is already defined.", ln);
+		}
+	}
+	else
+	{
+		error.logError("Unexpected symbol "+ token.Token, ln);
+	}
+}
+
 void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<int>& token, string& output, Error& error)
 {
 
@@ -2457,25 +2551,26 @@ void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<in
 		case lexmetype_Keyword:
 			if (token.Token == "class") {
 				parseClass(lexer, token, output, error);
+				break;
 			}
 			else if (token.Token == "interface") {
 				parseInterface(lexer, token, output, error);
+				break;
 			}
 			else if (token.Token == "if") 
 			{
 				output += token.Token;
-				lexer.GetNextToken(token);
 
 				//if (token.Token == "(")
 				//{
-					//output += "(";
+					output += "(";
 					parseExpression(lexer, token, output, error);
 					lexer.RewindStream();
 
 					lexer.GetNextToken(token);
 					//if (token.Token == ")")
 					//{
-						//output += ")";
+						output += ")";
 						lexer.GetNextToken(token);
 
 						while (token.Type == lexmetype_NewLine) lexer.GetNextToken(token);
@@ -2486,14 +2581,17 @@ void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<in
 					//}
 
 				//}
+				break;
 			}
 			else if (token.Token == "while") 
 			{
 				parseExpression(lexer, token, output, error);
+				break;
 			}
 			else if (token.Token == "switch") 
 			{
 				parseExpression(lexer, token, output, error);
+				break;
 			}
 			else if (token.Token == "return") 
 			{
@@ -2513,21 +2611,47 @@ void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<in
 				}
 				output += ";\n";
 				lexer.RewindStream();
+				break;
 			}
 			else if (token.Token == "let"
 				|| token.Token == "const")
 			{
 				parseLetStatement(lexer, token, output, error);
+				break;
+			}
+			else if (token.Token == "macro")
+			{
+				parseMacroDef(lexer, token, output, error);
+				break;
 			}
 			else
 			{
 				lexer.RewindStream();
 				parseExpression(lexer, token, output, error);
 				output += ";\n";
+				break;
 			}
 			break;
 		case lexmetype_Identifier:
 		{
+			if (macroTable.find(token.Token) != macroTable.end())
+			{
+				vector<string>& macroDef = macroTable[token.Token];
+
+				//parse the main lexer with a macroOuput
+				string macroOutput;
+				parseMacro(lexer, token, macroOutput, error);
+
+				//now parse the macroOutput into the original output
+
+				NRVLexer<int> lexer(&keywordTable, 0, delims);
+				//NRVLexToken<int> token;
+				lexer.SetSource(macroOutput.c_str());
+				parseStatement(NULL, lexer, token, output, error);
+
+				break;
+			}
+
 			//is this a symbol we know?
 			Symbol *s = findSymbol(token.Token);
 
@@ -2556,6 +2680,7 @@ void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<in
 					output += ";\n";
 				}
 			}
+			break;
 		}
 
 		break;
@@ -2565,10 +2690,12 @@ void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<in
 				output += "(";
 				parseExpression(lexer, token, output, error);
 				lexer.RewindStream();
+				break;
 			}
 			else if (token.Token == ")")
 			{
 				output += ");\n";
+				break;
 			}
 			else if (token.Token == "}")
 			{
@@ -2582,8 +2709,10 @@ void parseStatement(Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLexToken<in
 			break;
 
 		default:
+			lexer.RewindStream();
 			parseExpression(lexer, token, output, error);
 			output += ";\n";
+			break;
 		}
 
 		//lexer.GetNextToken(token);
@@ -2740,11 +2869,11 @@ void parseBlock(bool isObj, Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLex
 					}
 					pushArguments(functionSymbol->arguments, error);
 
-					returnStack.push_back(functionSymbol);
+					//returnStack.push_back(functionSymbol);
 				}
 				else
 				{
-					returnStack.push_back(&s_TypeUnknownSym);
+					//returnStack.push_back(&s_TypeUnknownSym);
 				}
 			
 				string k = output;
@@ -2756,7 +2885,7 @@ void parseBlock(bool isObj, Symbol* functionSymbol, NRVLexer<int>& lexer, NRVLex
 					//exiting scope
 					if(functionSymbol) cleanAncestorArgs(functionSymbol->interface);
 					popScope();
-					returnStack.pop_back();
+					//returnStack.pop_back();
 					output += "}\n";
 				}
 
@@ -2807,9 +2936,10 @@ int main()
 	keywordTable.insert("while");
 	keywordTable.insert("switch");
 	keywordTable.insert("do");
+	keywordTable.insert("macro");
 
 
-	s_TypeUnknownSym.type = type_Unknown;
+	//s_TypeUnknownSym.type = type_Unknown;
 
 
     //Setup the symbol pool
@@ -2826,7 +2956,6 @@ int main()
 		char* input = new char[len];
 		string output;
 		output.reserve(len);
-		char delims[]   = " \t";
 
 		len = fread(input, 1, len, f);
 		input[len] = 0;
