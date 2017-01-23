@@ -1,9 +1,16 @@
+/*this imports into a namespace matching the name of the module, or renamed as necessary, i.e. promise.Promise*/
+//import * from promise
+//import Promise as aPromise from promise
+//import * into promiseLib from promise
+
+/*this imports directly into this model, without having to use the fully qualified ns i.e. Promise*/
+using * from promise
 
 /*comment/*nested comment*/*/
 
 /*
 //macros
-macro ifnot <e1 expression> { <b1 block> }
+macro statement ifnot <e1 expression> <open_paren> <b1 block> <close_paren>
 {
 	if e1 == false {
 		b1
@@ -19,6 +26,23 @@ expand ifnot false
 {
 	true
 }
+
+macro implementNamed
+{
+	private name string
+	public getName() {
+		return name
+	}
+
+	public setName(newName string) {
+		return name = newName
+	}
+} 
+
+class myClass implements Named
+{
+	implementNamed
+}
 */
 
 /*
@@ -29,6 +53,8 @@ declext console {
 }
 */
 ext console.log("Prometheus script test")
+
+//func abc() return "abc"
 
 isBool := false
 func hello(w string) : string {
@@ -75,7 +101,7 @@ class Person implements Named, Aging
 	private age num
 	public gender string
 
-	Person (_name string, _age = 35) : name(_name) age(_age) {}
+	Person (_name string, _age = 35) : name(_name) age(_age)
 
 	public func getName() { return name }
 	public func changeName(newName = "jim") { return name = newName }
@@ -111,8 +137,6 @@ class Man extends Person implements Secretive
 class Woman extends Person
 {
 	public Woman(_name string, _age num) : Person(_name, _age) gender("woman")
-	{
-	}
 }
 
 let bob Man = Man("bob", 40)

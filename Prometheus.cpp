@@ -871,8 +871,18 @@ void parseLetStatement(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& ou
 
 			if (count < decldSymbols.size())
 			{
+				lexer.SaveState();
+
 				std::string expression;
 				SymType t = parseExpression(lexer, token, expression, error);
+
+				// TODO update the type of the assignee symbol
+
+				//if (t & type_Obj) {
+				//	lexer.RestoreState();
+				//	lexer.GetNextToken(token);
+				//	updatePrototype(decldSymbols[count], lexer, token, error);
+				//}
 
 				if (decldSymbols[count]->type != t)
 					error.logError("Type mismatch. Expected type " + GetStringFromType(decldSymbols[count]->type) + " but found " + GetStringFromType(t), ln);
@@ -2245,8 +2255,15 @@ SymType parseExpression(NRVLexer<int>& lexer, NRVLexToken<int>& token, string& o
 			else if (token.Token == "=")
 			{
 				output += "=";
-				evalEq(type, lexer, token, output, error);
+				SymType t = evalEq(type, lexer, token, output, error);
 				lexer.RewindStream();
+
+				//if (t & type_Obj) {
+				//	lexer.RestoreState();
+				//	lexer.GetNextToken(token);
+				//	updatePrototype(s, lexer, token, error);
+				//}
+
 				break;
 			}
 			else if (token.Token == "+")

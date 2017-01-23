@@ -1,0 +1,57 @@
+
+class Promise
+{
+	private func do_always
+	private func do_error
+	private func do_then
+	private Promise next
+
+	Promise(do_this func) {
+	
+		f := func()
+		{
+			try{
+				r := do_this()
+				if do_then {
+					do_then(r)
+				}
+			}
+			catch(e)
+			{
+				do_error(e)
+			}
+		
+			do_always()
+		}
+	
+		//setTimeout( f , 0s )
+		setTimeout( f , 0 )
+	}
+	
+	public func always(func f) : obj {
+		do_always = f
+		return next
+	}
+	
+	public func error(func f) : obj {
+		do_error = f
+		return next
+	}
+	
+	public func then(func f) : obj {
+		do_then = func () {
+			Promise(f)
+		}
+		return next
+	}
+}
+
+string val
+//A := func() : string { return val = "Hello World" }
+func A () : string { return val = "Hello World" }
+
+p := Promise(A)
+p.error( func (e) { ext alert(e) } )
+ .then( func () { alert(val) })
+ .then( func () { alert("second then") } )
+ .always( func () { alert("finish") })

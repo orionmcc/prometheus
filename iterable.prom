@@ -1,0 +1,40 @@
+interface Iterable
+{
+	public func first() : typeless
+	public func next() : typeless
+	public func finised : bool
+}
+
+/*
+class Fibonaci implements Iterable{
+	private num last1, last2
+	private num max
+
+	Fibonaci (_max num) : max(_max) {}
+
+	public func first() {
+		last1 = 1
+		last2 = 0
+		return 1
+	}
+	public func next() {
+		r := last1 + last2
+		last2 = last1
+		last1 = r
+		return r
+	}
+	public func finised {
+		if current > max {
+			return true
+		}
+		
+		return false
+	}
+}
+
+toFive := Fibonaci(5)
+toFive => each (func (val) {
+	console.log(val)
+})
+
+*/

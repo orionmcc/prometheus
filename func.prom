@@ -1,0 +1,44 @@
+using iterable
+
+func Iterable => each (f func) {
+	t := first()
+	while !finished {
+		f(t)
+		t = next()
+	}
+}
+
+func Iterable => filter (f func) {
+	t, a := first(), []
+
+	while !finished {
+		if f(t) {
+			a.push(t)
+		}
+		t = next()
+	}
+
+	return a
+}
+
+func Iterable => map (f func) {
+	t, a := first(), []
+
+	while !finished {
+		a.push(f(t))
+		t = next()
+	}
+
+	return a
+}
+
+func Iterable => reduce (f func, initial = null) {
+	t, v := first(), initial
+
+	while !it.finished {
+		v = f (v, t)
+		t = next()
+	}
+
+	return v
+}
