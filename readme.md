@@ -1,5 +1,5 @@
 
-# Preometheus Script
+# Prometheus Script
 Prom script is a side project I started working on a few years ago.  I've always been interested in language parsing, and over the years I've gotten a little better with it every step of the way.
 Prom script started as a way to alleviate some of my frustrations working with javascript.  Previously, it had been abandoned since there were many other options for transpiled languages, but I decided to pick this back up as more of a thought experiment.  
 In the beginning, prom script resembled c style languages pretty closely, but I started to think, what if I didn't constrain myself to behaving like just another c language.  What modern constructs might I mimic?  what fresh ideas could I use to generate code the way I wanted to.
