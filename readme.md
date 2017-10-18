@@ -16,25 +16,18 @@ const bar string //very important data, do not change me
 
 You can also assign multiple variables at once.  Notice, that Prom will assign the last known value type to all variables
 ```
-let number1, number2 number
+let number1, number2 num
 ```
 
 
-You can also assign value to your things at the same time
+You can also assign value to your things at the same time, inferring type where needed.
 ```
-let number1, number2, number3 num = 1, 2, 3
-```
-
-
-Note, you have to match type on declaration. Don't worry, you can mix types in a let statement as needed
-```
-let number1 num, string1 string, bool1 bool = 1, "foo", true
+let number1 = 1, number2 = 2, string1 = "foo"
 ```
 
-
-For convenience, you can use the declassign operators, which will declare and assign your variables at the same time, inferring type where necessary.  
+For convenience, you can use the declassign operators, which will declare and assign your variables at the same time, also  inferring type where necessary.  
 ```
-number1, string1 := 100, "bar"
+number1 := 100, string1 := "bar"
 const1 ^= "Very important data"
 ```
 
@@ -45,7 +38,7 @@ func foo () {
   return "bar"
 }
 ```
-You might notice that out function returns a value, but doesn't specify what type of value will be returned.  That is because function return type can be inferred.  We can also set it explicitly.
+You might notice that our function returns a value, but doesn't specify what type of value will be returned.  That is because function return type can be inferred.  We can also set it explicitly.
 
 ```
 func foo () : string {
@@ -117,7 +110,8 @@ class Person
 
 	//a default constructor is provided if you do not specify one
 	//class constructors support initializer lists
-	Person(_name string, _age num) : name(_name) age(_age) { /*do something else*/ }
+	// Person(_name string, _age num) : name(_name) age(_age) { /*do something else*/ }
+	Person(string => name, num => age) { /*do something else*/ }
 }
 ```
 
@@ -130,7 +124,7 @@ class LazyPerson extends Person
 	func doSomething() { return "nope" }
 
 	//an extended class must satisfy it's parent's constructors
-	LazyPerson(_name string, _age num, _hobby) : Person(_name, _age) hobby(_hobby)
+	LazyPerson(name string, age num, string => hobby) : Person(name, age)
 }
 ```
 
@@ -165,7 +159,8 @@ class Adult implements Aging, Working
 	private age num
 	private money num
 
-	Adult(_age = 25, _money = 200) : age(_age) money(_money) 
+	Adult( num 25 => age, num 200 => money)
+	// Adult( 25 => age, 200 => money) //or with type inference
 
 	public func growOld() num
 	public func die() string
