@@ -28,8 +28,12 @@ let number1 = 1, number2 = 2, string1 = "foo"
 For convenience, you can use the declassign operators, which will declare and assign your variables at the same time, also  inferring type where necessary.  
 ```
 number1 := 100, string1 := "bar"
-const1 ^= "Very important data"
+const1  := !!"Very important data", const2 := !!129
 ```
+
+## Numbers
+number1 = 1,234
+number1 == 1234
 
 ## Functions
 Let's say that we want to get some work done with out new super set language.  We're going to need some functions.
@@ -109,8 +113,7 @@ class Person
 	}
 
 	//a default constructor is provided if you do not specify one
-	//class constructors support initializer lists
-	// Person(_name string, _age num) : name(_name) age(_age) { /*do something else*/ }
+	//class constructors support initializers
 	Person(string => name, num => age) { /*do something else*/ }
 }
 ```
@@ -142,10 +145,12 @@ Interfaces allow you to declare that a class satisfies certain functionality wit
 interface Aging 
 {
 	public func growOld() num
+	public func isOld() bool
 	public func die() string
 }
 interface Working 
 {
+	public func workingHardly() bool
 	public func goToWork()  string
 	public func payTaxes() num
 }
@@ -163,7 +168,9 @@ class Adult implements Aging, Working
 	// Adult( 25 => age, 200 => money) //or with type inference
 
 	public func growOld() num
+	public func isOld() bool
 	public func die() string
+	public func workingHardly() bool
 	public func goToWork()  string
 	public func payTaxes() num
 }
@@ -196,14 +203,18 @@ func Working => work() {
 }
 
 func Aging => age() {
-	return growOld() + oldPerson()
+	return growOld() + die()
+}
+
+func Working, Aging => retire() {
+	return workindHardly() && isOld() ? "retire" : "keep working"
 }
 ```
 
 With these transitive methods defined, our code from earlier could be refactored as
 ```
 func life(Adult over18Person) : string {
-	return over18Person => work() + over18Perso n=> age()
+	return over18Person => work() +  over18Person=> retire() + over18Person=> age()
 }
 
 life(Adam)
