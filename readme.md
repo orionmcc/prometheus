@@ -16,19 +16,19 @@ const bar string //very important data, do not change me
 
 You can also assign multiple variables at once.  Notice, that Prom will assign the last known value type to all variables
 ```
-let number1, number2 num
+number1: num
 ```
 
 
 You can also assign value to your things at the same time, inferring type where needed.
 ```
-let number1 = 1, number2 = 2, string1 = "foo"
+number1: num = 1; const number2: num = 2; string1: string = "foo"
 ```
 
 For convenience, you can use the declassign operators, which will declare and assign your variables at the same time, also  inferring type where necessary.  
 ```
 number1 := 100, string1 := "bar"
-const1  := !!"Very important data", const2 := !!129
+!const1 := "Very important data", !const2 := 129
 ```
 
 ## Numbers
