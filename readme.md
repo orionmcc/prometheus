@@ -291,3 +291,32 @@ Comments are boring, and no one uses them, but if you do use them, be aware that
 /*super trippy/*nested /*commenting*/*/*/
 ```
 I find the very useful when trying to debug some part of a script that's gone awry.
+
+## Compile Time Execution
+
+```
+ENABLE_TESTS := true
+
+func doThis ( num x ) {
+ return x
+}
+
+func doThat ( num x ) {
+ return null
+}
+
+func testThisAndThat () {
+ x := 9
+ if doThis(x) != 9 {
+   panic "doThis(9) should return 9"
+ }
+ 
+ if doThat(x) != 10 {
+   panic "doThat(9) should return 10"
+ }
+}
+
+if ENABLE_TESTS {
+  run testThisAndThat
+}
+```
