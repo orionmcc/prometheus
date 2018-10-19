@@ -50,6 +50,12 @@ func foo () : string {
 }
 ```
 
+Now an anonymous function
+
+(num x): {
+  return x
+}(9)
+
 We can also add in some parameters.  Notice that type inference works here as well
 ```
 func concat ( str1 string, str2 string ) {
