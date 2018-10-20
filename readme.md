@@ -18,7 +18,7 @@ number1 := 100, string1 := "bar"
 ```
 
 ## Numbers
-number1 = 1,234
+number1 = 1,234  
 number1 == 1234
 
 ## Functions
