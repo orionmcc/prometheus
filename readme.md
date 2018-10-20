@@ -156,8 +156,8 @@ class Adult implements Aging, Working
 	private age num
 	private money num
 
-	Adult( num 25 => age, num 200 => money)
-	// Adult( 25 => age, 200 => money) //or with type inference
+	Adult(age: num = 25, money : num = 200)
+	// Adult(age := 25, money := 200) //or with type inference
 
 	public func growOld() num
 	public func isOld() bool
