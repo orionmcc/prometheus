@@ -106,7 +106,7 @@ class Person
 
 	//a default constructor is provided if you do not specify one
 	//class constructors support initializers
-	Person(string => name, num => age) { /*do something else*/ }
+	Person(name: string, age: num) { /*do something else*/ }
 }
 ```
 
@@ -119,7 +119,7 @@ class LazyPerson extends Person
 	func doSomething() { return "nope" }
 
 	//an extended class must satisfy it's parent's constructors
-	LazyPerson(name string, age num, string => hobby) : Person(name, age)
+	LazyPerson(name string, age num, hobby: string) : Person(name, age)
 }
 ```
 
@@ -287,7 +287,7 @@ I find the very useful when trying to debug some part of a script that's gone aw
 ## Compile Time Execution
 
 ```
-ENABLE_TESTS := true
+!ENABLE_TESTS := true
 
 func doThis ( num x ) {
  return x
@@ -297,18 +297,29 @@ func doThat ( num x ) {
  return null
 }
 
-func testThisAndThat () {
- x := 9
- if doThis(x) != 9 {
-   panic "doThis(9) should return 9"
- }
- 
- if doThat(x) != 10 {
-   panic "doThat(9) should return 10"
- }
+func test ( desc string, testCase func, ...params ) {
+  if ENABLE_TESTS {
+    run testCase testThisAndThat
+  }
 }
 
-if ENABLE_TESTS {
-  run testThisAndThat
-}
+#run test(
+ "When input is 9, the output should be 9",
+ (params[x: 0]){
+   if doThis(x) != 9 {
+     panic "doThis(9) should return 9"
+   }
+ },
+ 9
+)
+
+#run test(
+ "When input is 9, the output should be 10",
+ (params[x: 0]): {
+   if doThat(x) != 10 {
+     panic "doThis(9) should return 9"
+   }
+ },
+ 9
+)
 ```
